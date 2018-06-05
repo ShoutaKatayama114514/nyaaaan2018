@@ -9,13 +9,13 @@ public class Main {
 		
 		Scanner input = new Scanner(System.in);
 		
-		String into  = input.nextLine();
+		String into  = input.next();
 		char longer;
 		
 		while(into != null) {
 			int i = into.length();
 			
-			if(i % 2 == 0) {
+			if(i % 2 == 0 && i != 0) {
 				longer = into.charAt((i/2)-1);
 				into.replace(into.charAt((i/2)-1), into.charAt(0));
 				into.replace(into.charAt(0), longer);
@@ -27,13 +27,13 @@ public class Main {
 				into.replace(into.charAt((i/2)-1), into.charAt(0));
 				into.replace(into.charAt(0), longer);
 				longer = into.charAt((i/2)+1);
-				into.replace(into.charAt((i/2)+1), into.charAt(i));
-				into.replace(into.charAt(i), longer);
+				into.replace(into.charAt((i/2)+1), into.charAt(i-1));
+				into.replace(into.charAt(i-1), longer);
 			}
 			
 			for(int j = 0;j < i;j++) System.out.print(into.charAt(j));
 			
-			into  = input.nextLine();
+			into  = input.next();
 			System.out.println();
 			
 		}
