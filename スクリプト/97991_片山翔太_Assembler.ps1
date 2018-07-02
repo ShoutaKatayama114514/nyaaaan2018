@@ -22,112 +22,149 @@ function CheckSize($cmdLine,$Index){
     }elseif(($cmdLine[$Index] -eq "f") -Or ($cmdLine[$Index] -eq "F")){
         $cmdLine[$Index] = "5";
         $st = 1
-    }else{ if($Index -eq 1){ $myErrarFlag = 1 } }
+    }else{
+        if($Index -eq 1){ $cmdline[0] = "1" }
+    }
 
-    if(($Index -eq 2) -And ($st -eq 1)){$cmdLine[$Index] = $myMemory[$cmdLine[$Index]]}
-
+    if(($Index -eq 2) -And ($st -eq 1)){
+        $cmdLine[$Index] = $myMemory[$cmdLine[$Index]]
+    }elseif(!(([int]$cmdline[2] -ge 0) -And ([int]$cmdline[2] -lt 128))){
+        $cmdline[0] = "1"
+    }
     return $cmdLine 
 }
 
 function Set-Value($cmdline) {
     # TODO メモリに値をセットする
-   $myMemory[[int]$cmdLine[1]] = [int]$cmdLine[2]
+    switch ($cmdLine[0]) {
+        "1" { return 1 }
+        Default {    
+            $myMemory[[int]$cmdLine[1]] = [int]$cmdLine[2]
+            return 0
+        }
+    }
 }
 
 function Add-Value($cmdline) {
     # TODO メモリに値を加算する
-    $myMemory[[int]$cmdLine[1]] = $myMemory[[int]$cmdLine[1]] + [int]$cmdLine[2]
+    switch ($cmdLine[0]) {
+        "1" {  }
+        Default {
+            $calc = $myMemory[[int]$cmdLine[1]] + [int]$cmdLine[2]
+            $myMemory[[int]$cmdLine[1]] = $calc%128        
+        }
+    }
 }
 
 function Sub-Value($cmdline) {
     # TODO メモリに値を減産する
-    $myMemory[[int]$cmdLine[1]] = $myMemory[[int]$cmdLine[1]] - [int]$cmdLine[2]
+    switch ($cmdLine[0]) {
+        "0" { return 1 }
+        Default {
+            $calc = $myMemory[[int]$cmdLine[1]] - [int]$cmdLine[2]
+            if($calc -lt 0){
+                return 1 
+            }else{
+                $myMemory[[int]$cmdLine[1]] = $calc
+                return 0
+            }
+        }
+    }
 }
 
 function Mul-Value($cmdline) {
     # TODO メモリに値を除算する
-    $myMemory[[int]$cmdLine[1]] = $myMemory[[int]$cmdLine[1]] * [int]$cmdLine[2]
+    switch ($cmdLine[0]) {
+        condition { return 1 }
+        Default {
+            $calc = [Math]::Floor([int]($myMemory[[int]$cmdLine[1]] / [int]$cmdLine[2]))
+            $myMemory[[int]$cmdLine[1]] = $calc
+            return 0
+        }
+    }
 }
 
 function Div-Value($cmdline) {
     # TODO メモリに値を乗算する
-    $myMemory[[int]$cmdLine[1]] = $myMemory[[int]$cmdLine[1]] / [int]$cmdLine[2]
+    switch ($cmdline[0]) {
+        condition { return 1 }
+        Default {
+            $calc = $myMemory[[int]$cmdLine[1]] * [int]$cmdLine[2]
+            if($calc -gt 128){
+                return 1
+            }else{
+                $myMemory[[int]$cmdLine[1]] = $calc
+                return 0
+            }
+        }
+    }
 }
 
 function Get-Value($cmdline) {
     # TODO メモリの値を取得する
-    Write-Host $myMemory[[int]$cmdLine[1]]
+    switch ($cmdline[0]) {
+        condition { return 1 }
+        Default {
+            Write-Host $myMemory[[int]$cmdLine[1]]
+            return 0
+        }
+    }
 }
 
 [bool] $loop = $TRUE
 while ($loop) {
     $cmdLine = Read-Host "Input Command"
+    $myErrarFlag = 1
     $cmdLine = $cmdLine.Split(" ")
+    
+    $seting = 0
+    
+    if(($cmdLine[0] -eq "SET") -Or ($cmdLine[0] -eq "set")){
+        $cmdline = CheckSize $cmdline  1
+        $cmdline = CheckSize $cmdline  2
+        $seting = Set-Value $cmdline
+       
+    }elseif(($cmdLine[0] -eq "GET" ) -Or ($cmdLine[0] -eq "get")){
+        $cmdline = CheckSize $cmdline  1
+        $seting = Get-Value $cmdline 
+
+    }elseif(($cmdLine[0] -eq "ADD" ) -Or ($cmdLine[0] -eq "add")){
+        $cmdline = CheckSize $cmdline  1
+        $cmdline = CheckSize $cmdline  2
+        $seting = Add-Value  $cmdline  
+
+    }elseif(($cmdLine[0] -eq "SUB" ) -Or ($cmdLine[0] -eq "sub")){
+        $cmdline = CheckSize $cmdline  1
+        $cmdline = CheckSize $cmdline  2
+        $seting = Sub-Value  $cmdline  
+          
+    }elseif(($cmdLine[0] -eq "DIV" ) -Or ($cmdLine[0] -eq "div")){
+        $cmdline = CheckSize $cmdline  1
+        $cmdline = CheckSize $cmdline  2
+        $seting = Div-Value  $cmdline  
+        
+    }elseif(($cmdLine[0] -eq "MUL" ) -Or ($cmdLine[0] -eq "mul")){
+        $cmdline = CheckSize $cmdline  1            
+        $cmdline = CheckSize $cmdline  2
+        $seting = Mul-Value  $cmdline  
+        
+    }elseif(($cmdLine[0] -eq "RET" ) -Or ($cmdLine[0] -eq "ret")){
+        $loop = $FALSE
+        break
+    }elseif($cmdLine[0] -eq "a"){
+        CheckSize $cmdLine 1
+    }else{
+        $seting = 1
+    }
 
     # TODO コマンドに応じた処理を記述
-    switch ($myErrarFlag) {
-        0 {  
-            if(($cmdLine[0] -eq "SET") -Or ($cmdLine[0] -eq "set")){
-                $cmdline = CheckSize $cmdline  1
-                $cmdline = CheckSize $cmdline  2
-                if($myErrarFlag -ne 1){
-                    Set-Value $cmdline
-                }else{
-                    $myErrarFlag = 1
-                }
-            }elseif(($cmdLine[0] -eq "GET" ) -Or ($cmdLine[0] -eq "get")){
-                $cmdline = CheckSize $cmdline  1
-                if($myErrarFlag -ne 1){
-                    Get-Value $cmdline 
-                }else{
-                    $myErrarFlag = 1
-                }
-            }elseif(($cmdLine[0] -eq "ADD" ) -Or ($cmdLine[0] -eq "add")){
-                $cmdline = CheckSize $cmdline  1
-                $cmdline = CheckSize $cmdline  2
-                if($myErrarFlag -ne 1){
-                    Add-Value  $cmdline  
-                }else{
-                    $myErrarFlag = 1
-                }
-            }elseif(($cmdLine[0] -eq "SUB" ) -Or ($cmdLine[0] -eq "sub")){
-                $cmdline = CheckSize $cmdline  1
-                $cmdline = CheckSize $cmdline  2
-                if($myErrarFlag -ne 1){
-                    Sub-Value  $cmdline  
-                }else{
-                    $myErrarFlag = 1
-                }  
-            }elseif(($cmdLine[0] -eq "DIV" ) -Or ($cmdLine[0] -eq "div")){
-                $cmdline = CheckSize $cmdline  1
-                $cmdline = CheckSize $cmdline  2
-                if($myErrarFlag -ne 1){
-                    Div-Value  $cmdline  
-                }else{
-                    $myErrarFlag = 1
-                }
-            }elseif(($cmdLine[0] -eq "MUL" ) -Or ($cmdLine[0] -eq "mul")){
-                $cmdline = CheckSize $cmdline  1
-                $cmdline = CheckSize $cmdline  2
-                if($myErrarFlag -ne 1){
-                    Mul-Value  $cmdline  
-                }else{
-                    $myErrarFlag = 1
-                }
-            }elseif(($cmdLine[0] -eq "RET" ) -Or ($cmdLine[0] -eq "ret")){
-                $loop = $FALSE
-                break
-            }elseif($cmdLine[0] -eq "a"){
-                CheckSize $cmdLine 1
-            }
-            else{
-                Write-Host "Input Error!"
-                $myErrarFlag = 0
-            }
+    switch ($seting) {
+        1 {  
+            Write-Host "Input Error"
+            break
         }
         default { 
-            Write-Host "Input Error!"
-            $myErrarFlag = 0
+            
         }
     }
 }
